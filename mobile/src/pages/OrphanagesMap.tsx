@@ -1,60 +1,83 @@
-import React from 'react';
-import { StyleSheet, Text, View, Dimensions, TouchableOpacity } from "react-native";
+import React, { useEffect, useState } from "react";
+import { StyleSheet, Text, View, Dimensions } from "react-native";
+import { RectButton } from "react-native-gesture-handler";
 import MapView, { Marker, Callout, PROVIDER_GOOGLE } from "react-native-maps";
 import { Feather } from "@expo/vector-icons";
 import mapMarker from "../images/map-marker.png";
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation } from "@react-navigation/native";
+import api from "../services/api";
 
+interface Orphanage {
+  id: number;
+  name: string;
+  latitude: number;
+  longitude: number;
+}
 
 function OrphanagesMap() {
+  const [orphanages, setOrphanages] = useState<Orphanage[]>([]);
   const navigation = useNavigation();
 
-  function handleNavigationOrphanageDetails() {
-    navigation.navigate("OrphanageDetails")
+  useEffect(() => {
+    api.get("orphanages").then((res) => {
+      setOrphanages(res.data);
+    });
+  }, []);
+
+
+  function handleNavigationOrphanageDetails(id: number) {
+    navigation.navigate("OrphanageDetails", { id });
   }
 
+  function handleNavigateToCreateOrphanage() {
+    navigation.navigate("SelectMapPosition");
+  }
 
   return (
-  <View style={styles.container}>
-  <MapView
-    style={styles.map}
-    provider={PROVIDER_GOOGLE}
-    initialRegion={{
-      latitude: 49.1749376,
-      longitude: -122.8242944,
-      latitudeDelta: 0.05,
-      longitudeDelta: 0.05,
-    }}>
-    <Marker
-      icon={mapMarker}
-      calloutAnchor={{
-        x: 2.7,
-        y: 0.8,
-      }}
-      coordinate={{
-        latitude: 49.1749376,
-        longitude: -122.8242944,
-      }}>
-      <Callout tooltip onPress={handleNavigationOrphanageDetails}>
-        <View style={styles.calloutContainer}>
-          <Text style={styles.calloutText}>Hi there!</Text>
-        </View>
-      </Callout>
-    </Marker>
-  </MapView>
+    <View style={styles.container}>
+      <MapView
+        style={styles.map}
+        provider={PROVIDER_GOOGLE}
+        initialRegion={{
+          latitude: 49.1749376,
+          longitude: -122.8242944,
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
+        }}>
+        {orphanages.map((orphanage) => {
+          return (
+            <Marker
+              key={orphanage.id}
+              icon={mapMarker}
+              calloutAnchor={{
+                x: 2.7,
+                y: 0.8,
+              }}
+              coordinate={{
+                latitude: orphanage.latitude,
+                longitude: orphanage.longitude,
+              }}>
+              <Callout tooltip onPress={() => handleNavigationOrphanageDetails(orphanage.id)}>
+                <View style={styles.calloutContainer}>
+                  <Text style={styles.calloutText}>{orphanage.name}</Text>
+                </View>
+              </Callout>
+            </Marker>
+          );
+        })}
+      </MapView>
 
-  <View style={styles.footer}>
-    <Text style={styles.footerText}> Two orphanages has found</Text>
-    <TouchableOpacity
-      style={styles.createOrphanagesButton}
-      onPress={() => { }}>
-      <Feather name='plus' size={28} color='#FFF' />
-    </TouchableOpacity>
-  </View>
-</View>
-);
-
-};
+      <View style={styles.footer}>
+        <Text style={styles.footerText}> {orphanages.length} {(orphanages.length <= 1) ? "orphanage has" : "orphanages have"} been found</Text>
+        <RectButton
+          style={styles.createOrphanagesButton}
+          onPress={handleNavigateToCreateOrphanage}>
+          <Feather name='plus' size={28} color='#FFF' />
+        </RectButton>
+      </View>
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -99,7 +122,6 @@ const styles = StyleSheet.create({
   footerText: {
     color: "#8fa7b3",
     fontFamily: "Nunito_700Bold",
-
   },
 
   createOrphanagesButton: {
@@ -109,7 +131,7 @@ const styles = StyleSheet.create({
     height: 56,
     backgroundColor: "#15c3d6",
     borderRadius: 20,
-  }
+  },
 });
 
-export default OrphanagesMap
+export default OrphanagesMap;

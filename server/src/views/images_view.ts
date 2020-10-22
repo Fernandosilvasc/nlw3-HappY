@@ -5,7 +5,8 @@ export default {
     render(image: Image) {
         return {
             id: image.id,
-            path: `http://localhost:${process.env.APP_PORT}/uploads/${image.path}`
+            // path: `http://localhost:${process.env.APP_PORT}/uploads/${image.path}`
+            path: `http://192.168.1.66:3333/uploads/${image.path}`
         };
     },
 
